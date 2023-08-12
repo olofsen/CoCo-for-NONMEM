@@ -1,0 +1,3 @@
+?? GETENV :: DATAFILE = DATAFILE
+?? ; now using $DATA ?DATAFILE?
+$DATA ?DATAFILE?

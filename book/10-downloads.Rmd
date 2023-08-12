@@ -1,0 +1,23 @@
+# Downloads
+
+To download the source code for the CoCo program, click
+[CoCo preprocessor](http://www.daniellnagle.com/pub/coco.tar.gz).
+As CoCo has grown in size and complexity, it is now desirable to
+maintain CoCo as several modules rather than one large program. Thus,
+CoCo is now a gzipped tarfile containing the source files and a
+makefile. The makefile is set to use gfortran as the compiler, but
+also has macros for ifort and nagfor. You should be able to configure
+it for other compilers as well. You may want to use the free
+[F2KCLI](http://www.winteracter.com/f2kcli)
+Module from I.S.S. Ltd. to compile the CoCo program if your compiler
+doesn't support the Fortran 2003 command line access intrinsic
+procedures. Download the
+[restore](http://www.daniellnagle.com/pub/restore.f90)
+program which can undo CoCo processing under limited circumstances. The
+[env2inc](http://www.daniellnagle.com/pub/env2inc.f90)
+program is also available.
+
+For more information about the
+`fortran_env.inc` file, click
+[here](http://www.daniellnagle.com/env2inc.html)
+(link does not work).

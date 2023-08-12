@@ -1,0 +1,141 @@
+# The CoCo Set File
+
+The programmer may use a separate file, called a set file, which
+permits the programmer to change the values of variables and constants
+outside the CoCo program, and to specify what happens to inactive
+source text and CoCo directives. At most one set file is read and
+processed for each invocation of CoCo. Within the set file, variable
+declarations and constant definitions may appear, the values supplied
+override those of the same name which appear in any of the input
+files. There must be a declaration of the same variable or constant
+within one of the input files and the declaration must appear before
+any use of the name, only the value may be changed by the set
+file. See also Section \@ref(set-file-extensions) for more directives which may
+appear in the set file. A declaration in a set file must supply a
+value. The value can differ from that in a source file. Other
+attributes of a set file declaration must match those in the source
+file. A declaration is unknown to CoCo until the declaration in a
+source file is found. This keeps a CoCo program self-consistent and
+self-contained.
+
+Note that while CoCo can't tell that a symbol defined in the set file
+or command line isn't defined within a source file until it's finished
+processing, CoCo complains if the symbol is referenced before a
+definition appears in a source file. It's required to declare a CoCo
+variable in the source file before using it, otherwise a missing set
+file or forgotten command line option would cause the preprocessor to
+operate unexpectedly. The set file is appended, following a message,
+to the end of the output file, the command line options are available
+via [cmdline](#tab-macros) predefined macro and the
+[CMDLINE directive](#dir-cmdline).
+The effects of
+the command line and set file may also be checked via the
+[OPTIONS directive](#dir-options).
+
+The set file is appended to the end of the CoCo program's output
+(depending on the mode set by [the ALTER directive](#dir-set-alter)).
+If visible, its
+contents are separated from the program source by a standard-specified
+Fortran comment (thus, the set file may be the cause of several blank
+lines after the last line of source).
+
+The set file is named according to the -s command line option
+(see Section \@ref(Options)). If
+there isn't one, the name is set according to the output file
+name. The file name suffix, if any, is discarded and ".set" is
+appended to make the set file name. If a file with that name is not
+found, the value of the environment variable `COCO_SET_FILE` is
+checked. If a file with that name is not found, a file with the
+default name of "coco.set" is sought. This allows a programmer to have
+a default set file for a project or directory, or to control the
+preprocessing on a file-by-file basis. There is only one set file read
+for a multi-input file invocation of CoCo. See Using CoCo for more on
+the command line.
+
+## The ALTER Directive
+
+  The fate of inactive source lines and of CoCo directives (that is,
+  of all lines not appearing in the output file as active source
+  lines) is controlled by the ALTER directive. At most one alter
+  directive may appear in a set file. The -a command line option
+  (see Section \@ref(Options))
+  overrides the alter directive. The possible alter modes and their
+  effects are described in the following list:
+
+- [`?? ALTER: DELETE`]{#dir-set-alter}
+
+  All CoCo lines and inactive source lines are deleted from the output
+  file. These lines will not be seen by the compiler. While this
+  produces the easiest to read output source file, it does potentially
+  change line numbering (see [Line Numbering](#dir-set-number) for more details).
+
+- `?? ALTER: BLANK`
+
+  All CoCo lines and inactive source lines are replaced by blank lines
+  in the output file. These lines will not be seen by the compiler,
+  but line numbers are preserved.
+
+- `?? ALTER: SHIFT0`
+
+  All CoCo lines are printed with the leading "?" replaced by a
+  "!". Inactive source lines are printed with a "!" in place of the
+  character in column one. These lines will be seen by the compiler as
+  comments. This means the entire line, less only the initial
+  character, is visible in the source to be compiled; no characters
+  are shifted off the end.
+
+- `?? ALTER: SHIFT1`
+
+  All CoCo lines are printed with a "!" added before the leading
+  "?". Inactive source lines are printed with a "!" preceding the
+  leading character, CoCo issues a warning if a line so extended
+  exceeds 132 characters. These lines will be seen by the compiler as
+  comments.
+
+- `?? ALTER: SHIFT3`
+
+  All CoCo lines are printed with a leading "!?>" before the leading
+  "?". Inactive source lines are printed with "!?>" preceding the
+  leading character, CoCo issues a warning if a line so extended
+  exceeds 132 characters. These lines will be seen by the compiler as
+  comments. The leading "!?>" makes it easy to write a program to undo
+  the effects of the CoCo preprocessor (at least so long as the use of
+  CoCo conforms to the standard without use of any extensions and the
+  source code doesn't have any comments beginning with "!?>" which
+  would confound the restore process). See the restore program
+  available for download (see Chapter \@ref(downloads))
+  (this is similar to the program
+  specified in the standard).
+
+The following table summarizes the effects of the alter modes:
+
+ALTER Mode  Preserve Line Numbers?  Preserve Lengthen Line?  Undo?
+----------  ----------------------  -----------------------  -----
+DELETE      NO                      N/A	                     NO
+BLANK       YES                     N/A                      NO
+SHIFT0      YES                     YES                      NO
+SHIFT1      YES                     NO                       NO
+SHIFT3      YES                     NO                       YES
+
+A good default set file contains the line `?? ALTER: DELETE`, which
+overrides the standard specified default of `SHIFT3`. The same effect
+may be had by adding -ad to the CoCo command line. An example set file
+follows:
+
+````fortran
+?? ! no CoCo lines or inactive source lines
+?? ! appear in the source to be compiled
+?? alter: delete
+?? ! no debugging (unless -Ddebug is on the command line)
+?? ! debug should also be declared as a logical constant
+?? ! in a source file before being used in a source file
+?? logical, parameter :: debug = .false.
+````
+
+The alter line causes CoCo lines and inactive source lines to
+disappear from the output source file, and the declaration of the
+logical constant in the set file may override or confirm the
+declaration of the same name appearing in the source input
+file. (There should be a declaration named 'debug' as a logical
+constant in the source input.)
+

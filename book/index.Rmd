@@ -1,0 +1,114 @@
+---
+title: "Program Coco"
+author: "Dan Nagle (converted to bookdown and expanded by Erik Olofsen)"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+output: bookdown::gitbook
+documentclass: book
+link-citations: yes
+linkcolor: "blue"
+github-repo: rstudio/bookdown-demo
+description: "Program coco implements the Conditional Compilation auxiliary part of the Fortran Standard."
+---
+
+# About the Program Coco
+
+[CoCo](http://www.daniellnagle.com/coco.html)
+provides preprocessing as per Part 3 of the Fortran Standard
+(CoCo is short for "conditional compilation"). It implements the
+auxiliary third part of ISO/IEC 1539 (better known as Programming
+Languages- Fortran), and supports several
+extensions (see Chapter \@ref(extensions-to-standard-coco)).
+(Part 1 of the standard defines the Fortran Language proper. Part 2 is
+the ISO_VARYING_STRINGS standard, which is sometimes implemented as a
+[module](https://fortranwiki.org/fortran/show/iso_varying_string).)
+A [restore program](http://www.daniellnagle.com/coco_pg.html#download),
+similar to that described in the CoCo
+standard, is also available for download.
+
+Note that Part 3 of the Fortran Standard has been withdrawn, and Part
+2 very likely will be withdrawn within a few years. At least some of
+the functionality of Part 2 is available via allocatable character
+entities, whether all of it will be made available is not yet decided.
+
+Generally, CoCo programs are interpreted line by line. A line is
+either a CoCo line or a source line. Lines with the characters "??" in
+columns 1 and 2 are CoCo lines. All other lines are expected to be
+Fortran source lines (of course, the other lines need not actually be
+Fortran source lines, but they are called source lines in the
+discussion on this page). Except for the "??" characters in columns 1
+and 2, CoCo lines follow the same rules as Fortran free form source
+lines. Like Fortran free form lines, CoCo lines are continued by
+placing an "&" as the last character of the line to be continued. A
+CoCo comment is any text following a "!" following the "??"
+characters. A CoCo comment may not follow the "&" used to continue a
+quoted string onto the next line. Text in CoCo lines may appear in
+upper case or lower case interchangeably, CoCo preserves case in CoCo
+lines written to the output file and ignores case in source
+lines. Either single quotes or double quotes may be used to delimit
+strings. CoCo directives are rendered in upper case on this page for
+clarity, and because the standard document uses upper case.
+
+CoCo directives may define integer constants and variables, and
+logical constants and variables. CoCo uses a strong type system, which
+means that all symbols must be declared and that integer symbols and
+logical symbols are not interchangeable. The distinction between
+constants and variables provides a further level of
+control. Conditional compilation is expressed by CoCo IF blocks, which
+start with CoCo IF directives. The conditions are determined by CoCo
+logical expressions, which may include relational operations between
+CoCo integer expressions. CoCo IF-blocks function analogously to
+Fortran IF-blocks, with IF, ELSE IF, ELSE and END IF directives. CoCo
+IF-blocks select which lines will be passed to the output source file
+for compilation. An INCLUDE directive is also available so
+preprocessing may be applied to the included lines as well. The
+complete set of standard directives is listed
+in Chapter \@ref(standard-coco).
+
+As implemented here (see Chapter \@ref(using-coco)),
+a one invocation of CoCo reads one or more input
+source files and writes one output source file to be compiled. A short
+example of a CoCo program follows, the lines with initial "??" are the
+CoCo lines, lines without the initial "??" are Fortran source lines:
+
+````fortran
+?? ! used to choose whether the intrinsic module sets stdout
+?? logical, parameter :: has_intrinsic_module = .false.
+
+program hello_world
+
+?? ! use number or asterisk
+?? if( has_intrinsic_module )then
+!  output_unit is stdout
+use, intrinsic :: iso_fortran_env, only: output_unit
+
+write( unit= output_unit, fmt= *) 'Hello, world!'
+?? else
+!  * is stdout
+write( unit= *, fmt= *) 'Hello, world!'
+?? endif
+
+stop
+
+end program hello_world
+````
+
+Above, lines starting with "?? !" are CoCo comments (lines starting
+with "!" are, of course, Fortran comments), **has_intrinsic_module** is a
+CoCo logical constant given the value false, and the CoCo IF block is
+used to select which of two sets of source lines supplies the Fortran
+comment and write statement. If the above example is contained in a
+file named `hello_world.fpp`, then a command line **coco hello_world**
+produces `hello_world.f90` with unit * written. A command line **coco
+-Dhas_intrinsic_module hello_world** produces `hello_world.f90` with unit
+output_unit written. (The [-D option](#Options) changes the value of
+**has_intrinsic_module**. See command line options for more.)
+
+## The Portability Project and CoCo
+
+The Portability Project has been largely superseded by improvements to
+the standard-defined `IS_FORTRAN_ENV` intrinsic module. There is an
+env2inc program to write the type kind values provided in
+`ISO_FORTRAN_ENV` to a CoCo include file for use when preprocessing
+programs. Of course, env2inc must be compiled by the same processor to
+be used with the preprocessed program.

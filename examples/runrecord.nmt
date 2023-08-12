@@ -1,0 +1,21 @@
+?? TEXT :: RUNRECORD(BASEDON,DESCR,LABEL,STRUCTMOD,COVMOD,IIV,IOV,RV,EST)
+;; 1. Based on: ?BASEDON?
+;; 2. Description:
+;; ?DESCR?
+;; 3. Label:
+;; ?LABEL?
+;; 4. Structural model:
+;; ?STRUCTMOD?
+;; 5. Covariate model:
+;; ?COVMOD?
+;; 6. Inter-individual variability:
+;; ?IIV?
+;; 7. Inter-occasion variability:
+;; ?IOV?
+;; 8. Residual variability:
+;; ?RV?
+;; 9. Estimation:
+;; ?EST?
+?? END TEXT
+
+?? COPY :: RUNRECORD(,initial,base,2abs1disp,none,diagonal,diagonal,propadd,FOCE)

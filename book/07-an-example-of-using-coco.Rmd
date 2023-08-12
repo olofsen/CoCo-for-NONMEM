@@ -1,0 +1,160 @@
+# An Example of Using CoCo
+
+Statement of the problem to be solved: A single source file is to be
+prepared which will specify a Fortran module containing a cube root
+function to support all real kinds on any processor at a computing
+center. Using the program env2inc (compiled and executed separately
+for each compiler at the computer center, see Chapter \@ref(downloads)),
+to provide kind parameters
+in separate fortran_env.inc include files, this module may be written
+as follows:
+
+````fortran
+?? ! define the coco integer constants
+?? ! real32, real64, real128 (among others)
+?? include 'fortran_env.inc'
+
+module cube_root
+
+!  import Fortran kind parameters
+!  real32, real64, real128
+use, intrinsic :: iso_fortran_env, only: real32, real64, real128
+
+implicit none
+
+private
+
+interface cbrt
+?? if( real32 > 0 )then
+   module procedure real32_cbrt
+?? endif
+?? if( real64 > 0 )then
+   module procedure real64_cbrt
+?? endif
+?? if( real128 > 0 )then
+   module procedure real128_cbrt
+?? endif
+end interface
+
+public :: cbrt
+
+contains
+
+?? if( real32 > 0 )then
+elemental real( kind= real32) function real32_cbrt( x)
+real( kind= real32), intent( in) :: x
+
+   real32_cbrt = sign( exp( log( abs( x)) / 3.0_real32), x)
+
+end function real32_cbrt
+?? endif
+
+?? if( real64 > 0 )then
+elemental real( kind= real64) function real64_cbrt( x)
+real( kind= real64), intent( in) :: x
+
+   real64_cbrt = sign( exp( log( abs( x)) / 3.0_real64), x)
+
+end function real64_cbrt
+?? endif
+
+?? if( real128 > 0 )then
+elemental real( kind= real128) function real128_cbrt( x)
+real( kind= real128), intent( in) :: x
+
+   real128_cbrt = sign( exp( log( abs( x)) / 3.0_real128), x)
+
+end function real128_cbrt
+?? endif
+
+end module cube_root
+````
+
+Note that the real32, real64, and real128 which appear in the Fortran
+source proper are the three kind parameters which are defined in the
+intrinsic module iso_fortran_env. The real32, real64 and real128
+appearing in the CoCo IF directives are CoCo integer constants which
+are defined in the fortran_env.inc CoCo include file. They have the
+same values as the Fortran named constants but are available to CoCo
+to control the preprocessing of the source file. The fortran_env.inc
+is made automatically by the env2inc program (see Chapter \@ref(downloads)).
+All the Fortran kind
+parameters actually appearing in the output source file are valid on
+the processor, because if the kind isn't supported, the corresponding
+CoCo integer constant is set to a negative value, thereby preventing
+the code from being present in the version of the source for that
+processor. The relational expression in the IF-statements could be
+assigned to logical constants if desired.
+
+Solving the same problem, but this time using the text-copy mechanism,
+is shown below:
+
+````fortran
+?? ! define the coco logical symbols
+?? ! real32, real64, real128 (among others)
+?? include 'fortran_env.inc'
+
+module cube_root
+
+?? text :: cbrt( kind)
+elemental real( kind= ?kind?) function ?kind?_cbrt( x)
+real( kind= ?kind?), intent( in) :: x
+
+   ?kind?_cbrt = sign( exp( log( abs( x)) / 3.0_?kind?), x)
+
+end function ?kind?_cbrt
+?? end text cbrt
+
+!  define Fortran kind parameters
+!  real32, real64, real128
+use, intrinsic :: iso_fortran_env, only: real32, real64, real128
+
+implicit none
+
+private
+
+! define the generic name cbrt
+interface cbrt
+?? if( real32 > 0 )then
+   module procedure real32_cbrt
+?? endif
+?? if( real64 > 0 )then
+   module procedure real64_cbrt
+?? endif
+?? if( real128 > 0 )then
+   module procedure real128_cbrt
+?? endif
+end interface
+
+public :: cbrt
+
+contains
+
+?? if( real32 > 0 )then
+?? copy :: cbrt( real32)
+?? endif
+
+?? if( real64 > 0 )then
+?? copy :: cbrt( real64)
+?? endif
+
+?? if( real128 > 0 )then
+?? copy :: cbrt( real128)
+?? endif
+
+end module cube_root
+````
+
+Note that this time, the source for the cbrt() function need be
+specified only once, the text-copy mechanism performs the
+copy-paste-substitute operation as needed.
+
+One advantage of using the values of processor kind values as CoCo
+integers is that the value may be used within the program (perhaps in
+a Fortran comment). Below, a CoCo logical constant is made from one of
+the integer values found in the fortran_env.inc include file. Of
+course, this may be done with any of them, if this style is desired.
+
+````fortran
+?? logical, parameter :: has_real128 = real128 > 0
+````

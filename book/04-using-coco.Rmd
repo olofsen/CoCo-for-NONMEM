@@ -1,0 +1,196 @@
+# Using Coco
+
+CoCo is distributed as source code and is written in standard
+Fortran 2003. You will have to find a replacement for the command line
+access routines if your processor does not support them (but most
+compilers do support them), or code them yourself using the command
+line routines your processor does support (for example, iargc() and
+getarg()). Procedures mimicking the standard procedures are available
+from I.S.S. Ltd. via their free
+[F2KCLI Module](https://www.winteracter.com/f2kcli)
+for a very wide variety of compilers.
+
+## Synopsis
+
+````bash
+coco -V
+
+coco -h
+
+coco [ [options] [--] ] [ base-name | output input [...] ]
+````
+
+CoCo responds to the "-V" option by printing its version information
+and quitting. CoCo responds to the "-h" option by printing its command
+line options and quitting. If it finds no file name arguments on its
+command line, CoCo reads its input from stdin and writes its output to
+stdout (but see the
+[input set file directive](#dir-set-input)
+and the [output file set file directive](#dir-set-output) extensions).
+A lone file name command line argument is
+a file basename: it has ".fpp" appended to it and used as the single
+input file name, ".f90" is appended and used as the output file
+name. If more than one file name argument appears on the command line
+the first is taken to be the output file name, the rest are treated,
+in the order of occurrence, as input file names.
+
+Examples of CoCo usage follow:
+
+````bash
+coco <input.f >output.f90
+````
+
+causes CoCo to read the file input.f and to write the file
+output.f90. A set file named "coco.set" is sought.
+
+````bash
+coco -V
+````
+
+causes CoCo to print its version information to stderr and stop. See
+also [the coco macro](#dir-macro).
+
+````bash
+coco -h
+````
+
+causes CoCo to print short summary of its command line options to
+stderr and stop.
+
+````bash
+coco source
+````
+
+causes CoCo to read source.fpp and write source.f90. The file name
+source.set is checked to see if it exists, if so, it is processed as
+the set file. If source.set is not found, the value of the environment
+variable `COCO_SET_FILE` is checked to see if it exists, if so, it is
+processed as the set file. If not, coco.set is checked to see if it
+exists, if so, it is processed as the set file. If coco.set is not
+found, no set file is processed.
+
+````bash
+coco output.f90 input1.f90 input2.f90 input3.f90
+````
+
+causes CoCo to read input1.f90, input2.f90, input3.f90 in that order
+and to write output.f90. The file name output.set is checked to see if
+it exists, if so, it is processed as the set file. If output.set is
+not found, the value of the environment variable `COCO_SET_FILE` is
+checked to see if it exists, if so, it is processed as the set
+file. If not, coco.set is checked to see if it exists, if so, it is
+processed as the set file. If coco.set is not found, no set file is
+processed.
+
+The specification of input and output file names has a number of
+effects. In addition to setting the name of the set file
+(see Chapter \@ref(the-coco-set-file)), several
+[macros](#tab-macros) are predefined by CoCo.
+The input file name and the set file
+name are available as macros (`file` and `setfile`, respectively).
+Also, there are `date` and `time` macros to
+document the preprocessing. See the [predefined macros](#tab-macros)
+for more information about CoCo's predefined macros.
+
+## Options {#Options}
+
+Generally, the option on the command line overrides the set file
+directive controlling the same behavior. However, some options are
+cumulative or must have a matching directive, see the description of
+each option and directive for specifics. The following command line
+options are recognized:
+
+- `-a?` sets the alter mode, with ? being one of d (delete), b (blank), 0
+(shift0), 1 (shift1), 3 (shift3). This option overrides
+[an ALTER directive](#dir-set-alter)
+in the set file. Only one `-a` option can appear on a command line.
+
+- `-Dname[=val]` idefines name to be a logical or integer name and supplies
+the value, as if in the set file (see the [-D rules](#drules)). This option
+overrides the value provided by a definition of the same name by
+[an integer directive](#dir-integer) or
+[a logical directive](#dir-logical) in the set file or in an
+input file.
+
+- `-ffile-name` names a freeze file to be read. The freeze file must
+contain only declarations. A freeze file may be prepared manually, or
+by a freeze directive appearing in an input file. The freeze directive
+behaves differently when present in a set file. There, the freeze file
+is read. In an input file, the freeze file is written with definitions
+and values current at its location. This option overrides a
+[freeze directive in the set file](#dir-set-freeze).
+Only one `-f` option can appear on a command line.
+
+- `-F` specifies fixed form source. By default, CoCo assumes free form
+source files The option sets the file suffix for the output file
+to ".f" from the default ".f90" and causes line wrapping to occur at
+column 72 rather than column 132 (see [the form directive](#dir-set-form)).
+Only one `-F` option can appear on the command line.
+
+- `-h` makes CoCo print a short summary of the command line options to
+stderr and stop.
+
+- `-Idirectory-name` adds the named directory to the list of directories
+CoCo searches for include files not found in the current directory
+(see Section \@ref(drules) and the [the directory directive](#dir-set-directory)). The directory occurs before those
+listed by directory directives in the set file. CoCo always searches
+the current directory first when seeking include files.
+
+- `-lfile-name` names a log file to receive CoCo's reports, stderr is the
+default (see [the logfile directive](#dir-set-logfile)).
+This option overrides a logfile
+directive. Only one `-l` option can appear on a command line.
+
+- `-m` turns on placing a comment line in the output marking the
+end-of-file of subsequent input source files (see
+[the mark directive](#dir-set-mark)).
+This option overrides a mark directive. Only one `-m` option
+can appear on a command line.
+
+- `-n` turns on source line numbering (see
+[the number directive](#dir-set-number)). This
+option overrides a number directive. Only one `-n` option can appear on
+a command line.
+
+- `-p` disables posting a copy of the set file at the end of the output
+file and the separating line specified by the standard (see
+[the post directive](#dir-set-post)).
+This option overrides a post directive. Only one `-p` option
+can appear on a command line.
+
+- `-r` writes a summary report to the logfile at the end of
+preprocessing. See [the set file report directive](#dir-set-report)
+and [the source file report directive](#dir-report).
+Only one `-r` option can appear on a command line.
+
+- `-sfile-name` names the set file. If the named set file does not exist,
+a set file named from the output file name is sought. If that file
+does not exist, the file named by the environment variable
+`COCO_SET_FILE` is sought. If that file does not exist, coco.set is
+sought. Only one `-s` option can appear on a command line.
+
+- `-S` prevents CoCo from seeking a set file, unless a set file is named
+via a `-s` option. That set file will be sought. No other set file will be
+sought.
+
+- `-v` makes CoCo work verbosely, reporting all file opening and closing,
+and a few other events, to the log file (see
+[the verbose directive](#dir-set-verbose)).
+Only one `-v` option can appear on a command line.
+
+- `-V` makes CoCo print its version information to stderr and stop. See
+also the [coco](#tab-macros) macro.
+
+- `-w` turns off source line wrapping (see
+[the wrap directive](#dir-set-wrap)).
+This option overrides a wrap directive.
+Only one `-w` option can appear on a command line.
+
+- `-W` turns off warning messages (see
+[the warning directive](#dir-set-warning)). This option
+overrides a warning directive. Only one `-W` option can appear on a
+command line.
+
+In general, the value of a command line option is used in preference
+to a value in the set file; the value in the set file is used in
+preference to a value in a source file.

@@ -1,0 +1,45 @@
+# List of Directives and Macros
+
+Because the description of the available directives and macros is scattered
+across the earlier chapters, an index is given here.
+
+## Directives
+
+- [?? ; [commentary]](#dir-commentary) (Standard CoCo)
+- [?? name = expression](#dir-name) (Standard CoCo)
+- [?? ALTER](#dir-set-alter) (Standard SET file)
+- [?? ASSERT](#dir-assert) (Extension)
+- [?? CMDLINE](#dir-cmdline) (Diagnostic extension)
+- [?? COPY](#dir-copy) (Extension)
+- [?? DIRECTORY](#dir-set-directory) (Set file extension)
+- [?? DOCUMENT](#dir-document) (Diagnostic extension)
+- [?? FORM](#dir-set-form) (Set file extension)
+- [?? FREEZE](#dir-freeze) (File handling extension), [?? FREEZE](#dir-set-freeze) (Set file extension)
+- [?? GETENV](#dir-getenv) (Extension)
+- [?? ENDFILE](#dir-endfile) (File handling extension)
+- [?? IF](#dir-if) (Standard CoCo)
+- [?? INCLUDE](#dir-include) (Standard CoCo)
+- [?? INPUT](#dir-set-input) (Set file extension)
+- [?? INTEGER](#dir-integer) (Standard CoCo)
+- [?? LOGFILE](#dir-set-logfile) (Set file extension)
+- [?? LOGICAL](#dir-logical) (Standard CoCo)
+- [?? MACRO](#dir-macro) (Extension)
+- [?? MARK](#dir-set-mark) (Set file extension)
+- [?? MESSAGE](#dir-message) (Standard CoCo)
+- [?? NUMBER](#dir-set-number) (Set file extension)
+- [?? OPEN](#dir-open) (File handling extension)
+- [?? OPTIONS](#dir-options) (Diagnostic extension)
+- [?? OUTPUT](#dir-output) (File handling extension), [?? OUTPUT](#dir-set-output) (Set file extension)
+- [?? POST](#dir-set-post) (Set file extension)
+- [?? REPORT](#dir-report) (Diagnostic extension), [?? REPORT](#dir-set-report) (Set file extension)
+- [?? STOP](#dir-stop) (Standard CoCo)
+- [?? SYMBOLS](#dir-symbols) (Diagnostic extension)
+- [?? TEXT](#dir-text) (Extension)
+- [?? VERBOSE](#dir-set-verbose) (Set file extension)
+- [?? WARNING](#dir-set-warning) (Set file extension)
+- [?? WRAP](#dir-set-wrap) (Set file extension)
+
+## Macros
+
+- [Predefined Macros]
+- New: [?EVAL? predefined macro]

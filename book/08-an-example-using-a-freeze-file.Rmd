@@ -1,0 +1,55 @@
+# An Example Using a *freeze-file*
+
+This example involves two executions of CoCo, the first to prepare the
+freeze file, the second to use it. The first execution reads an input
+file with no source lines. The input file simply includes the
+fortran_env.inc file, which may be modified by command line options
+and/or set file directives. Other declarations and processing logic
+may be present as well, but for simplicity, very little is shown.
+
+````fortran
+?? ! prepare the freeze-file
+
+?? ! fortran_env.inc was made by env2inc
+?? ! env2inc must have been compiled by the same compiler
+?? ! to be used to compile this program !!
+
+?? include 'fortran_env.inc'
+
+?? ! what to do when no 128-bit real
+
+?? if( real128 <= 0 )then
+?? !  setup for life without real128
+?? end if
+
+?? ! debugging is enabled via the command line or set file
+?? ! the actual value of debug at the time of the freeze statement
+?? ! will be written to the freeze-file configure.inc
+
+?? logical, parameter :: debug = .false.
+
+?? freeze 'configure.inc'
+````
+
+In the second execution of CoCo, the source file intended to be
+compiled is preprocessed. It merely includes the freeze file,
+containing the declaration of all symbols needed. Using this
+technique, CoCo may taylor one configuration of definitions for use in
+many source files.
+
+````fortran
+?? ! use the prepared freeze-file
+
+?? include 'configure.inc'
+
+?? ! no more coco variables are needed
+?? freeze
+
+?? ! the rest of the program to be compiled follows
+````
+
+The FREEZE directive in the second file does not write a freeze file,
+it only serves to prevent further declarations. Auxiliary variables
+must be declared before this directive appears. A FREEZE directive
+appearing in the set file would not allow further declarations in any
+input source file.

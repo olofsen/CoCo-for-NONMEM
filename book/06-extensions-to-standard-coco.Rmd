@@ -1,0 +1,559 @@
+# Extensions to Standard CoCo
+
+This implementation supports some extensions to standard
+CoCo. Extensions to the standard CoCo include
+editing extensions (Section \@ref(editing-extensions)),
+file handling extensions (Section \@ref(file-handling-extensions)),
+and diagnostic extensions (Section \@ref(diagnostic-extensions)),.
+These directives may appear in source files.
+Other extensions (Section \@ref(set-file-extensions))
+may appear only in the set file.
+
+## Editing Extensions
+
+A name of an integer, logical, macro, or file variable, when it
+appears between the argument key characters without embedded blanks,
+is replaced by the value of the name, as described in the
+following. Source lines may be edited, CoCo directives are not edited.
+
+
+## Integers and Logicals as Macros
+
+The string `?name?` is checked to see if name is the name of a CoCo
+integer or logical constant or variable. If it is, it is replaced by
+the value of the CoCo integer (as a possibly signed digit string)
+literal or logical (as ".true." or ".false.") literal. The name may be
+in either case. The following example illustrates the use of CoCo
+integers. The repeat count in the character declaration of the format
+must be a character substring, which is provided by the string
+substituted in place of ?size?:
+
+````fortran
+?? ! set problem size
+?? integer :: size = 10
+integer, parameter :: nmax = ?size?
+real, dimension( nmax) :: a
+character, parameter :: my_fmt = '(?size?es18.9)'
+````
+
+## Macros
+
+Macros are another extension. A macro is a name whose value is a
+string. There may be arguments to the macro, which are strings
+replaced by the strings used in place of the arguments when the macro
+is referenced. The macro is used by surrounding its name with the
+argument key characters, ?name?. If the macro has arguments, the
+arguments follow the trailing key character thus, ?name?( args). Take
+care if a macro name appears within another macro's string. A
+previously declared macro name may not appear in a macro value,
+subsequent macro names are not checked. This is a basic measure to
+prevent recursive macro definitions.
+
+The programmer may define macros via [the MACRO directive](#dir-macro).
+There are some predefined macros, they are listed in the following table:
+
+## Predefined Macros
+
+The [predefined macros]{#tab-macros} may not be redefined, they may be considered to
+be constants (even if their value changes during execution). These
+names cannot be used for any purpose, they cannot be dummy argument
+names to macros or text blocks.
+
+name     definition                              set by
+----     --------------------------------------  -------------------------------------
+file     input file name                         input file
+line     input file line number                  count input lines per file
+date     date preprocessing                      wall clock
+time     time preprocessing                      wall clock
+coco     coco's RCS Id string                    CoCo RCS check-out
+setfile  set file name                           set file
+logfile  log file name                           log file
+output   output file name                        output file
+cmdline  CoCo command line                       O/S shell
+user     user identifier 	                 USER or LOGNAME environment variables
+cwd      directory where CoCo is run             PWD environment variable
+incpath  directories searched for include files  command line and set file
+freeze   set file freeze or -f command line      command line or set file
+null     a null string                           constant
+blank    a blank character                       constant
+
+[The MACRO directive](#dir-macro)
+defines a macro. If a `?name?` is found which is the
+name of a macro, it is replaced with the value of the macro. Arguments
+may be present, if so, they are substituted in the value. There is one
+name space for all symbol names, but macro dummy argument names have a
+scope of the macro only.
+
+The following table summarizes CoCo substitutions where a symbol's
+name appears between the argument key characters.
+
+CoCo Symbol    Replacement
+-------------  -------------
+Integer        Literal Value
+Logical        Literal Value
+Macro          String Value
+File Variable  File Name
+
+Take care with integers; a negative value could result in two Fortran
+operators appearing consecutively.
+
+## Text Blocks
+
+[The TEXT and COPY directives](#dir-text)
+define a text block (that is, one or more
+lines), and copy it into the source. A text block may be considered a
+multi-line macro (note that Fortran distinguishes lines and
+statements). The text block is defined by the TEXT and END TEXT
+directives. The COPY directive copies a text block of the same
+name. Arguments may be present, if so, they are substituted in the
+value. Conditional compilation applies within text blocks, it is
+effective during the copy operation. Editing of names also applies
+during the copy operation. Text blocks must be nested correctly within
+IF blocks.
+
+## Source File Directives
+
+The following directives edit the source code:
+
+- [`?? ASSERT ( condition )`]{#dir-assert}
+
+  This causes code to be written to the output Fortran source to
+  verify that the logical condition is true during program execution,
+  and to halt execution with an error message written to unit= * if it
+  is false. The error message includes the file name and line number
+  where the assert directive was found. The assert directive should be
+  placed only where executable Fortran code is allowed, and the
+  condition should refer only to those Fortran symbols in scope at
+  that location in the source file. CoCo cannot check that this is
+  true.
+
+- [`?? MACRO [, PARENS] :: name [ ( arg [, arg ] ... ) ] = string`]{#dir-macro}
+
+  This causes subsequent strings of the form ?name? to be replaced by
+  string in the source code. The name must not be the name of an
+  integer, a logical, another macro, a text block, or a file
+  variable. If the ( arg[, arg]...) is present, this causes subsequent
+  strings of the form ?name?( str[, str]... ) to be replaced by string
+  in the source code, with strs substituted for the corresponding
+  ?arg? within string. The macro dummy argument list, if present, must
+  not be empty. A macro definition may not appear in the set file,
+  because a macro may not be redefined (the set file overrides
+  existing definitions). The number of actual arguments must match the
+  number of dummy arguments (the number of args must match the number
+  of strs). When PARENS is present, actual arguments are enclosed in
+  parenthesis (if not already) when substituted in the macro
+  string. If PARENS is present, there must be a dummy argument list
+  present as well.
+
+- [`?? TEXT [, PARENS] :: name [ ( arg [, arg ] ... ) ]`]{#dir-text}
+
+  Defines the lines which follow, up to the next END TEXT directive,
+  as being the text block with the given name. The name must not be
+  the name of an integer, a logical, a macro, another text block, or a
+  file variable. This text may be copied into the CoCo output by using
+  [the copy directive](#dir-copy).
+  The text dummy argument list, if present, must
+  not be empty. See below for information about which directives may
+  appear between the text directive and the matching end text
+  directive. TEXT and COPY directives may appear only in source
+  files. A text block may not be redefined. The number of actual
+  arguments must match the number of dummy arguments (the number of
+  args on the TEXT directive must match the number of strs on the COPY
+  directive). When PARENS is present, actual arguments are enclosed in
+  parenthesis (if not already) when substituted by the COPY
+  directive. If PARENS is present, there must be a dummy argument list
+  present as well. Text blocks may not be nested.
+
+- `?? END TEXT [ name ]`
+
+  Marks the end of the text block which started with the previous TEXT
+  directive. The name, if present, must match the name on the
+  preceding TEXT directive.
+
+- [`?? COPY :: name [ ( str [, str ] ... ) ]`]{#dir-copy}
+
+  Copies the text block named by name into the output. If the ( arg[,
+  arg]...) was present on the text directive, the COPY directive must
+  have the ( str[, str]... ) present with one str for each arg, and
+  causes each strs substituted for the corresponding ?arg? within the
+  text block. The number of actual arguments must match the number of
+  dummy arguments (the number of args on the TEXT directive must match
+  the number of strs on the COPY directive). A COPY directive may not
+  appear within a text block.
+
+- [`?? GETENV :: name = string`]{#dir-getenv}
+
+  This causes an environment variable named string to be sought. If
+  found, a macro is defined with name and a value of the value of the
+  environment variable. That is, the GETENV declaration is the same as
+  ?? MACRO :: name = $string (using the usual shell convention). It is
+  an error if the environment variable is not found.
+
+There is one name space for all integer names, logical names, macro
+names, text block names, and file variable names. A dummy argument on
+one macro or text block may have the same name as a dummy argument on
+another macro or text block, but must not be the same as an integer,
+logical, macro, text block, or file variable. This also avoids
+ambiguity when expanding macros and copying text blocks. Note that
+dummy arguments are substituted within a macro value or a text block,
+but not within CoCo directives contained within text
+blocks. Therefore, conditional compilation of text blocks during
+copying can be a function of variables, but not actual arguments. A
+string enclosed in parenthesis or brackets (for example, array
+constructors) is treated as a unit when used as an actual argument.
+
+Only the following directives may appear between the TEXT and END TEXT
+directives: the ASSERT, IF, ELSE IF, ELSE, END IF, MESSAGE, STOP and
+assignment directives. While a text block may appear in an include
+file, an INCLUDE directive may not appear within a text
+block. Declaration directives may not appear because each declaration
+may only occur once per program. Text blocks may not be nested.
+
+An example of a macro declaration and use follows. Note the lack of
+parenthesis around the actual arguments (the parentheses are added by
+the PARENS on the macro statement), and the lack of space between the
+macro name and opening parenthesis of the actual argument list:
+
+````fortran
+?? ! used to compute radius
+?? macro, parens :: hypot( x, y) = sqrt( ?x?*?x?+?y?*?y?)
+?? ! r1, r2, s1, s2 are variables
+! r = sqrt( (r2-r1)*(r2-r1) + (s2-s1)*(s2-s1) )
+r = ?hypot?( r2-r1, s2-s1)
+````
+
+An example of a text block follows:
+
+````fortran
+?? ! define stack operations as a text block
+?? ! with 'type' as an argument
+
+?? text :: stackops( type)
+subroutine push_?type?( item)
+type( ?type?_t), intent( in) :: item
+?type?_stack( next_?type?) = item
+next_?type? = next_?type? + 1
+return
+end subroutine push_?type?
+
+subroutine pop_?type?( item)
+type( ?type?_t), intent( out) :: item
+next_?type? = next_?type? - 1
+item = ?type?_stack( next_?type?)
+return
+end subroutine pop_?type?
+?? end text stackops
+
+?? ! write stack ops for type fermion_t
+?? copy :: stackops( fermion)
+
+?? ! write stack ops for type boson_t
+?? copy :: stackops( boson)
+````
+
+An interface block could be provided to allow the push and pop
+routines to be called with a generic name, if desired. The stack
+arrays and stack indexes must be declared outside the routines, as
+defined here.
+
+## File Handling Extensions
+
+These directives allow some limited control over files.
+
+- [`?? ENDFILE`]{#dir-endfile}
+
+  Causes CoCo to end processing of the current input file. The endfile
+  directive may not be continued onto subsequent lines. This might be
+  used, for example, if all lines containing interface blocks have
+  been processed and the procedure bodies are not to appear in the
+  output.
+
+- [`?? FREEZE [ 'filename' ]`]{#dir-freeze}
+
+  Causes CoCo to disallow further declarations during the run. If
+  present, the filename names a file to receive declarations for all
+  symbols currently declared, and their current value if they are
+  defined. The filename may be used as an include file in subsequent
+  runs, or as a freeze file on a `-f` command line option
+  (see Section \@ref(Options))
+  or a [freeze set file directive](#dir-set-freeze).
+  The file is created, its previous contents are
+  lost. Note that the freeze directive behaves differently when
+  present in the set file. See also the `-f` command line option.
+
+- [`?? OPEN :: name = 'filename'`]{#dir-open}
+
+  Causes CoCo to open the named file for output, and define the name
+  as a file variable that refers to the file.
+
+- [`?? OUTPUT [ : name ]`]{#dir-output}
+
+  Causes CoCo to write subsequent lines to the file indicated by the
+  named file variable. If the file variable is missing, output reverts
+  to the output file. The lines are treated as inactive lines in the
+  original output file (and therefore controlled by the alter state).
+
+In the example that follows, a module contains several functions. A
+separate file is to contain a procedure with tests, one for each
+function. The OPEN and OUTPUT directives solve this as follows:
+
+````fortran
+module functions
+contains
+
+?? ! open the file for output
+?? open :: t = 'testfunctions.f90'
+
+?? ! write to testfunctions.f90 via the file variable t
+?? ! this might be visible in the regular output file,
+?? ! depending upon the alter mode
+?? output: t
+subroutine test_functions()
+! declarations
+?? ! resume writing to the regular output file
+?? output
+
+?? ! this is the test reference wanted for each function
+?? text :: call( cond)
+call testit( ?cond?)
+?? end text call
+
+?? ! add the test for first
+?? output: t
+?? copy :: call( first( x) == x+1 )
+?? output
+
+function first( x)
+! rest of first
+end function first
+
+?? ! add the test for second
+?? output: t
+?? copy :: call( second( x) == x-1 )
+?? output
+
+function second( x)
+! rest of second
+end function second
+
+!  other functions
+
+?? ! finish the test procedure
+?? output: t
+end subroutine test_functions
+?? output
+
+end module functions
+````
+
+When the file containing the module is preprocessed, the file
+containing the test procedure is automatically written. It may be
+easier to keep the tests synchronized with the functions this way. The
+alternate output file need not be Fortran, of course. Any
+documentation, or even mathematics, perhaps written in LaTeX, might be
+considered for similar treatment.
+
+## Diagnostic Extensions
+
+These directives allow the programmer to monitor and debug the
+processing of source files:
+
+- [`?? CMDLINE]{#dir-cmdline}
+
+  Causes CoCo to print the command line of its invocation to the
+  logfile, or to stderr. The command line does not change during
+  processing. This may be useful capturing values set by -D options
+  (see Section \@ref(Options)),
+  or other options that override those from the set file.
+
+- [`?? DOCUMENT`]{#dir-document}
+
+  Causes CoCo to act as if the following were encountered in the input
+  file.
+
+````fortran
+    !
+    ! Preprocessor executed: ?date? ?time?
+    !
+    ! Preprocessor command line: ?cmdline?
+    ! Preprocessor set file: ?setfile?
+    ! Preprocessor log file: ?logfile?
+    ! Preprocessor version: ?coco?
+    !
+    ! Source file: ?file? line: ?line?
+    ! Compile file: ?output?
+    ! Include path: ?incpath?
+    ! Freeze file: ?freeze?
+    !
+    ! User: ?user?
+    ! Current directory: ?cwd?
+    !
+````
+
+  This has the effect of documenting the particulars of the
+  preprocessing. (If this were in an include file, the ?file? and
+  ?line? would refer to the include file, which might not be the
+  desired information.)
+
+- [`?? OPTIONS`]{#dir-options}
+
+  Causes CoCo to print the currently in effect options to the logfile,
+  or to stderr. Since options may be set only via the command line or
+  the set file, the options report does not change during
+  processing. This may be useful capturing values set by a set file
+  (see Chapter \@ref(the-coco-set-file)) or
+  command line, and thus not defined within the source files proper.
+
+- [`?? REPORT`]{#dir-report}
+
+  Causes CoCo to print its end of processing report to the logfile, or
+  to stderr, with data current as of the position where the directive
+  is encountered. Compare with [the set file REPORT directive](#dir-set-report),
+  which causes the report to be written at the end of processing.
+
+- [`?? SYMBOLS`]{#dir-symbols}
+
+  Causes CoCo to write to the logfile, or to stderr, a summary of all
+  symbols (integers, logicals, macros, text blocks, and file
+  variables) known at the point where the directive is encountered. If
+  an integer or logical variable has no value when the SYMBOLS
+  directive is encountered, the value printed is "<undefined>". The
+  value of a macro is the replacement string without argument
+  substitution, if any. The value of a text block is printed
+  line-by-line as if it were a multi-line macro, and may contain CoCo
+  directives such as if blocks. File variables have the name of the
+  file printed.
+
+If CoCo is being used along with the env2inc program to capture the
+processor-supported kinds, the **fortran_env.inc** file can be used to
+define CoCo symbols for the compiler used to compile the env2inc
+program. The env2inc program must be compiled by the same compiler as
+will be used to compile the program to be preprocessed, including any
+compiler options affecting the available kinds (for example, -r8),
+otherwise, unexpected, suboptimal, or incorrect results may occur. The
+fortran_env.inc file includes the results of the compiler_version and
+the compiler_options intrinsic module procedures to allow checking
+that this is so.
+
+## Set File Extensions
+
+Some extension directives may appear only in the set file, and are
+intended to allow the programmer to control modes of CoCo otherwise
+controlled from the command line (for example, in case the program was
+compiled without the [f2kcli module](https://www.winteracter.com/f2kcli),
+or other access to the command
+line). An option on the command line generally overrides the
+corresponding directive in the set file. These directives are listed
+below:
+
+- [`?? DIRECTORY 'directory-name'`]{#dir-set-directory}
+
+  Causes CoCo to search directory-name when an include file is not
+  found in the current directory. Several DIRECTORY directives may
+  each specify a directory-name, they are searched in the order they
+  are declared. A DIRECTORY directive must appear in the set file
+  (this is so all references to an include file name in one
+  preprocessing run refer to the same file). See also the `-I` command
+  line option (Section \@ref(Options)).
+
+- [`?? FORM: [ FREE | FIXED ]`]{#dir-set-form}
+
+  Causes CoCo to treat the input source files as free form source
+  files or as fixed form source files. By default, CoCo assumes input
+  files are free form source. FIXED changes CoCo to assume fixed form
+  source files. FREE is allowed to confirm the default choice. Only
+  one FORM directive may occur in a set file. See also the `-F` command
+  line option.
+
+- [`?? FREEZE 'file-name'`]{#dir-set-freeze}
+
+  Names a freeze file. Freeze files contain declarations only. This
+  directive also prohibits declarations from appearing in any input
+  file. See also Chapter \@ref(using-coco).
+  A freeze directive is ignored when a `-f`
+  command line option is present. Note that a freeze directive behaves
+  differently when present in a source file.
+
+- [`?? INPUT 'file-name'`]{#dir-set-input}
+
+  Names an input file. Several input directives may occur within a set
+  file. Files are processed in the order the directives are
+  encountered. See also Chapter \@ref(using-coco).
+  Input directives are ignored when
+  input file names appear on the command line.
+
+- [`?? LOGFILE 'file-name'`]{#dir-set-logfile}
+
+  The logfile directive is set to the named file. The file is
+  created. Only one LOGFILE directive may occur in a set file. See
+  also the `-l` command line option.
+
+- [`?? MARK: [ ON | OFF ]`]{#dir-set-mark}
+
+  Turns on of off the placing a line in the output to mark subsequent
+  input source files. Only one MARK directive may occur in a set
+  file. See also the `-m` command line option.
+
+- [`?? NUMBER: [ ON | OFF ]`]{#dir-set-number}
+
+  Turns on of off the numbering of source lines. If on, source lines
+  appearing in the output as active source lines have the input file
+  name and line number appearing as a Fortran comment starting at the
+  wrap column. Only one NUMBER directive may occur in a set file. See
+  also the `-n` command line option and Section
+  \@ref(about-line-numbering-and-wrapping) on line wrapping and
+  numbering.
+
+- [`?? OUTPUT 'file-name'`]{#dir-set-output}
+
+  Names the output file. The file is created. Only one OUTPUT
+  directive may occur in a set file. See also Chapter \@ref(using-coco).
+  Output directives are ignored when an output file name appears on the
+  command line.
+
+- [`?? POST: [ ON | OFF ]`]{#dir-set-post}
+
+  Causes CoCo to copy the set file to the end of the output file at
+  the completion of processing if ON is selected (the default, as
+  specified by the standard). If OFF is specified, the set file is not
+  copied to the end of the output file, nor is the standard-specified
+  separating line present. Only one POST directive may occur in a set
+  file. See the `-p` command line option.
+
+- [`?? REPORT: [ ON | OFF ]`]{#dir-set-report}
+
+  Causes CoCo to write a summary report at the end of processing if ON
+  is specified, or if OFF is specified, the default, the report is not
+  written. Only one REPORT directive may occur in a set file. See the
+  `-r` command line option and [the REPORT directive](#dir-report)
+  that appears in a source file.
+
+- [`?? VERBOSE: [ ON | OFF ]`]{#dir-set-verbose}
+
+  Turns on of off the reporting of file openings and closings. Unless
+  verbose mode is set on the command line, the opening of the set file
+  cannot be reported this way, because the set file is already being
+  read when this directive is executed. Only one VERBOSE directive may
+  occur in a set file. See also the `-v` command line option.
+
+- [`?? WRAP: [ ON | OFF ]`]{#dir-set-wrap}
+
+  Turns on of off the wrapping of source lines. If on, source lines
+  appearing in the output as active source lines are wrapped starting
+  at the wrap column. Only one WRAP directive may occur in a set
+  file. See also the `-w` command line option and
+  Section \@ref(about-line-numbering-and-wrapping) on line wrapping and
+  numbering.
+
+- [`?? WARNING: [ ON | OFF ]`]{#dir-set-warning}
+
+  Turns on of off the issuing of warning messages. If on, CoCo will
+  warn about a few patterns that may be errors. See also the `-W`
+  command line option.
+
+Since the set file is copied to the end of the output file, a record
+may be kept within the source of the CoCo options used to generate the
+output file. If the options specified in the set file are overridden
+by command line options, the command line could be present in the
+output file via the [?cmdline?](#tab-macros)
+predefined macro or a [?? CMDLINE](#dir-cmdline) directive.

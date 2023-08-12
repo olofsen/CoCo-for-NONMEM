@@ -1,0 +1,7 @@
+?? INTEGER :: DRUG
+
+?? IF (DRUG.EQ.1) THEN
+$DATA drug1.csv
+?? ELSE
+$DATA drug2.csv
+?? ENDIF

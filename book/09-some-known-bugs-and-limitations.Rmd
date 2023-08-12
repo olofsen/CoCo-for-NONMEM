@@ -1,0 +1,72 @@
+# Some Known Bugs and Limitations
+
+CoCo does not read Fortran source beyond the minimum necessary for
+macro replacement. This is done both for efficiency, and to increase
+CoCo's reliability by allowing a simpler design. However, some
+limitations are a result of this choice.
+
+During source line editing, CoCo makes several passes through its list
+of macro names for each line to be edited. A symbol to be replaced by
+its value must appear entirely on one line, the name cannot be broken
+across a continuation line. CoCo checks that a macro value does not
+contain a reference to a previously-declared macro (this tries to
+prevents recursion). Thus, a macro may appear in the value of another
+macro if the macro to appear is declared later than the macro in whose
+value it is to appear. One may conditionally define a macro to have
+the desired macro value. The integers, logical, and predefined macros
+are replaced after the explicitly declared macros. When editing a line
+causes the line to become too long, it is broken into several lines
+and each new line is output. This may cause line numbers to disagree
+between the input file and the output file, if so, enabling line
+numbering may help trace compiler error messages back to the original
+source line. Better, when tracing a compiler error message read the
+file compiled rather than the file input to the preprocessor.
+
+The actual arguments supplied to macro expansion and text block
+copying should contain either no parenthesis, or balanced
+parenthesis. CoCo attempts to skip commas intended as part of format
+specifications, array subscript sets, and procedure argument lists by
+skipping commas appearing between parentheses. Unbalanced parentheses
+within actual arguments can foil this process.
+
+CoCo attempts to glean the directory separation character by scanning
+the value of the `?cwd?` macro, which is gotten from the PWD environment
+variable. If this fails, the directory separation character must be
+appended to directory names specified on `?? DIRECTORY` set file
+directives and on `-I` command line options. If a simple directory
+separator is inappropriate (for example, with VMS), the directory
+names must be specified so that simply appending the include file name
+produces a value that will allow the include file to be used.
+
+CoCo accesses its command line via the usual methods. Since file
+indirection is ordinarily handled by the shell as part of program
+startup processing, CoCo cannot distinguish the case where files have
+been redirected to stdin and stdout from the case where there are no
+source files on the command line. Therefore, CoCo will honor input and
+output directives in its set file even in the case where files have
+been redirected from the command line. Care should be taken to use a
+set file without input or output directives when file indirection is
+intended, and, for clarity, to shun file indirection when input or
+output set file directives are intended. To document CoCo's idea of
+its command line, see the [?? CMDLINE](#dir-cmdline)
+directive, [the ?cmdline? predefined macro](#tab-macros),
+and the [the ?? DOCUMENT directive](#dir-document).
+Also, if there are no input or
+output file names on the command line (either because stdin and stdout
+are redirected, or because [?? INPUT](#dir-set-input)
+and [?? OUTPUT](#dir-set-output) set file directives
+are being used, and there is no set file named on the command line
+(see Section \@ref(Options)),
+the only set file that can be read is coco.set, the default.
+
+If verbose mode is on, and a log file is named, the closing of the log
+file is reported on stderr, because after the log file is closed the
+log file can no longer receive comments. Likewise, if verbose mode is
+switched on in the set file, the opening of the set file will not be
+reported, unless verbose mode is also switched on by the command line.
+
+As with all CoCo statements and inactive source lines, the set file,
+its standard-defined separation line, and lines marking subsequent
+input files are invisible when the alter state is set to delete or
+blank. If you want to see these lines, set the alter state to one of
+the shift values.

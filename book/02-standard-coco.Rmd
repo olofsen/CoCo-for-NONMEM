@@ -1,0 +1,227 @@
+# Standard CoCo
+
+A CoCo program consists of CoCo lines and source lines. The source
+lines comprise the Fortran program proper. The CoCo lines direct CoCo
+in preprocessing the program. A CoCo program may have an optional set
+file associated with it (see Chapter \@ref(the-coco-set-file)).
+The set file may be used to control what CoCo
+does with CoCo lines and with source lines which are not intended to
+be part of the output source code. Some directives may appear only in
+the set file, some may appear only with the source code, and some may
+appear in either. The set file may declare CoCo symbols and if so, the
+set file values override the value contained in the program
+declaration. The declarations must match, however, as far as type and
+whether the symbol is a constant (this keeps a CoCo program
+self-contained and self-consistent).
+
+As an extension (see Section \@ref(set-file-extensions)),
+the set file also allows the programmer to set some
+values that may also be set by command line options
+(see Section \@ref(Options)) in case CoCo
+doesn't have access to the command line (if the processor used to
+compile CoCo does not support command line access).
+
+The standard CoCo directives are the
+[INCLUDE](#dir-include) directive, [INTEGER](#dir-integer) and
+[LOGICAL](#dir-logical) declarations and assignments, IF/ELSE IF/ELSE/END
+[IF](#dir-if)
+directives, and [MESSAGE](#dir-message) and
+[STOP](#dir-stop) directives. An integer or logical
+variable may be given a value where declared, and if so, it may be
+declared to be a constant. Any directive may appear in upper case or
+lower case interchangeably. Names of CoCo symbols are interpreted
+without regard to case.
+
+A source line in the input is said to be active when it is selected to
+appear in the output as a source line (that is, not as a comment). A
+line not selected to appear in the output as a source line is said to
+be inactive. The fate of inactive source lines and CoCo lines is
+controlled by the ALTER directive in the set file (see Section \@ref(the-alter-directive)).
+Active lines and
+inactive lines are selected by CoCo IF blocks, analogously to the
+selection of executed statements by Fortran IF blocks.
+
+The standard CoCo directives are described on the list below:
+
+- [`?? INCLUDE 'file-name'`]{#dir-include}
+
+  The INCLUDE directive is replaced in the output by the contents of the
+named file. There must not be a comment after the file name.
+
+  The file name may appear in single quotes or double quotes. The
+include directive may not be continued onto subsequent
+lines. Depending on the mode selected by the [ALTER](#dir-set-alter) directive, the
+include file's contents may be marked in the output source file with
+INCLUDE and END INCLUDE comments identifying the file included.
+
+- [`?? INTEGER [, PARAMETER ] :: name [ = expression ] [, name [ = expression ] ] ...`]{#dir-integer}
+
+  The INTEGER directive declares one or more integer variables with
+the names given; the values are assigned if the expressions are
+present. The name must not be the name of another integer, a logical,
+a macro, a text block, or a file variable. A value must be [assigned](#dir-name)
+before the variable may be used. If the PARAMETER attribute is
+present, the expressions must be as well, and the names are the names
+of constants and may not be assigned a value subsequently in any
+source file. An integer declaration in the set file must supply a
+value for either a constant or a variable.
+
+- [`?? LOGICAL [, PARAMETER ] :: name [ = expression ] [, name [ = expression ] ] ...`]{#dir-logical}
+
+  The LOGICAL directive declares one or more logical variables with
+  the names given, the values are assigned if the expressions are
+  present. The name must not be the name of an integer, another
+  logical, a macro, a text block, or a file variable. A value must be
+  [assigned](#dir-name) before the variable may be used. If the PARAMETER attribute
+  is present, the expressions must be as well, and the names are the
+  names of constants and may not be assigned a value subsequently in
+  any source file. A logical declaration in the set file must supply a
+  value for either a constant or a variable.
+
+- [`?? IF( logical-expression )THEN`]{#dir-if}
+
+  Introduces an IF-block, the IF-block must be closed by an END IF directive.
+
+  CoCo IF-blocks function analogously to Fortran IF-blocks. Lines in
+  the block following the IF or ELSE IF directive with the first true
+  expression are active (copied to the output as source lines), lines
+  following other IF or ELSE IF directives in a block are inactive
+  (are not copied to the output as source lines). Lines following the
+  ELSE directive are active if none of the logical expressions on the
+  preceding IF or ELSE IF directives in the block evaluated to true.
+
+- `?? ELSE IF( logical-expression )THEN`
+
+  Introduces an ELSE IF portion of an IF-block. The logical expression
+  is evaluated to see whether it is true, the lines following the
+  first true expression encountered in an IF-block are active. There
+  may optionally be whitespace between the ELSE and the IF.
+
+- `?? ELSE`
+
+  This directive must follow all ELSE IF directives in an
+  IF-block. The lines following an ELSE directive are active if no
+  other lines within the if-block were. If no ELSE directive is
+  present in an IF-block and no expression evaluates to true, no lines
+  from the block are active.
+
+- `?? END IF`
+
+  Ends an IF-block. There may optionally be whitespace between the END
+  and the IF.
+
+- [`?? MESSAGE [ item [, item ] ... ]`]{#dir-message}
+
+  Each item is a quoted string or an expression whose value is printed
+  to the log file, or to stderr.
+
+- [`?? STOP`]{#dir-stop}
+
+  Causes CoCo processing to halt. A message is printed to the log
+  file, or to stderr.
+
+- [`?? name = expression`]{#dir-name}
+
+  Assigns a new value to the integer or logical variable whose name
+  appears on the left side of the equals.
+
+  The [expression]{#div-expressions}
+  may be a literal value (for example, 42 or .true.), a
+  CoCo variable, or a CoCo expression using CoCo operators (+, -, *, /
+  with integers; .and., .or., .eqv., .neqv., .not. with logical
+  operands; relational .eq., ==, .ne., /=, .lt., <, .le., <=, .ge.,
+  >=, and .gt., > produce a logical result between integer
+  operands). The usual Fortran precedence rules apply. Parentheses are
+  honored. As an extension, the \\ character is treated as a modulus
+  operator, with the precedence of the multiply operator and the
+  division operator.
+
+- [`?? ! [ commentary ]`]{#dir-commentary}
+
+  Is ignored by CoCo and may be used to document the CoCo program, as
+  with any CoCo line its fate is set by the ALTER directive. A CoCo
+  comment may appear on any CoCo directive (except the INCLUDE
+  directive or when continuing a quoted string) following a !
+  character. A line which is blank after the ?? characters is
+  considered to be a comment.
+
+The `name` and `name = expression` forms of the integer variable and
+logical variable declarations may be mixed; a name declared to be a
+constant, of course, must be supplied with a value. A declaration in
+the set file must have a value, the purpose of the set file
+declarations (or a command line values) is to supply alternative
+initial values.
+
+All the statements comprising an `IF` construct must appear in the same
+source file and CoCo directives in blocks not appearing in the output
+must be well formed directives. This implementation does minimal
+checking of directives in inactive lines. Input lines in [TEXT blocks](#dir-text)
+are treated similarly. An `IF` block within a TEXT block is interpreted
+during execution of [the COPY directive](#dir-copy).
+
+An example CoCo program follows. As in the example above, there are
+CoCo comments, CoCo lines, Fortran comments and Fortran source lines:
+
+````fortran
+?? ! the logical variable will be used
+?? ! to choose whether to use array syntax
+?? ! or explicit loops
+?? logical :: array_syntax
+
+?? ! suppose the compiler is either v1.0 or v2.0
+?? ! the integer variable here supplies
+?? ! the default value here and might be overridden
+?? ! by a value from the set file or command line
+?? integer, parameter :: version = 20
+
+?? ! which version selects whether array syntax is used
+?? if( version == 20 )then       ! efficient array code
+??    array_syntax = .true.      ! so use array syntax
+?? else if( version == 10 )then  ! inefficient array code
+??    array_syntax = .false.     ! so no array syntax
+?? else                          ! unknown version
+??    message 'error: unknown version: ', version
+??    stop                       ! go no further
+?? end if
+
+program sum_arrays
+implicit none
+
+real, dimension( 100) :: a, b, c
+
+?? ! need loop index when using explicit loops
+?? if( .not. array_syntax )then
+integer :: i              ! loop index
+?? endif
+
+read( unit= *, fmt= *) b, c
+
+! element-wise sum
+?? if( array_syntax )then
+a = b + c
+?? else
+do i = 1, 100
+   a(i) = b(i) + c(i)
+end do
+?? end if
+
+! evaluate the final sum and print it
+write( unit= *, fmt= *) 'sum of a: ', sum(a)
+stop
+
+end program sum_arrays
+````
+
+Above, a CoCo integer, **version**, is used to choose a value for a CoCo
+logical variable, **array_syntax**. If version has been set incorrectly
+(the CoCo else clause), CoCo will print the explanatory message and
+stop. The CoCo logical variable is then used to choose whether an
+auxiliary integer is compiled into the Fortran program to serve as the
+index of the explicit loop. Then the CoCo logical variable is used to
+select either explicit loops or array syntax.
+
+Note the strong typing CoCo uses: the value of the logical symbol can
+be true or false, while the value of the integer is numeric. This
+provides a degree of error checking. As extensions, macros, TEXT
+blocks, and file variables also have distinct declarations and uses.
+

@@ -1,0 +1,126 @@
+# Topics on Using CoCo
+
+## About the -D rules {#drules}
+
+The following rules apply to the -D option: if the "=" is present, it
+must be followed by an integer literal value in which case the name is
+defined to be an [integer name](#dir-integer)
+with the value specified. This value
+overrides an integer with the same name declared within the set file,
+if there is one, and within (one of) the input source file(s) (or an
+include file). If no "=" is present, then name is defined to be a
+[logical name](#dir-logical)
+with a value of ".true.". This value overrides a logical
+with the same name declared within the set file, if there is one, and
+within (one of) the input source file(s) (or an include
+file). Definitions from the command line override those in the set
+file, but like definitions in the set file they must match definitions
+in (one of) the source file(s). There is no way to give a value to a
+text variable or macro, or a file variable directly via `-D`
+(see Section \@ref(Options)).
+A name is
+effectively undefined until the declaration is seen in a source
+file. The set file value or command line value supersedes the value
+(if there is one) defined in the source file. A declaration in the set
+file must supply a value, even for declarations of variables.
+
+## About the INCLUDE search rules
+
+The rules for directories specified by the `-I` command line option
+(see Section \@ref(Options))
+and the [DIRECTORY directive](#dir-set-directory)
+are that the directories specified by the `-I`
+command line option are searched first in the order they appear on the
+command line. Then directories appearing in DIRECTORY directives are
+searched in the order the directives appear in the set file. This way,
+the command line may override the set file. DIRECTORY directives may
+not appear in the source file(s) proper so all include files with the
+same name are known to come from the same directory, and thus each
+occurrence of any one named include file will be the same file. CoCo
+guesses what the file separator character (between directory names in
+an absolute file name) by examining the value found for the `cwd`
+predefined macro. CoCo gets this value from the `PWD` environment
+variable. If this fails, CoCo doesn't know what appropriate separator
+is, in that case, the appropriate separator (for example, "/", "\" or
+":") must be appended after the directory name, whether it appears in
+the `-I` command line option, or in a [DIRECTORY directive](#dir-set-directory).
+
+## About Line Numbering and Wrapping
+
+By default, source lines are wrapped starting at column 132 for free
+form source, and starting at column 72 for fixed form source. This
+position is called the wrap length. Wrapping means that if text
+extends beyond the wrap length, text beyond the wrap length on the
+line is ended, a continuation character is added (in free form
+source), and the remainder of the line is written as a continuation
+line following the wrapped line. This can be defeated with the `-w`
+(see Section \@ref(Options)
+option, or with [the WRAP directive](#dir-set-wrap).
+CoCo does not attempt to wrap comments.
+
+When lines are numbered, the file name and line number are added to
+the end of the source line. Line numbering occurs starting past the
+end of the line whether the source form is free form (after column
+132) or fixed form (after column 72). If the source line extends
+longer than the standard-specified length, the number appears after
+all text on the line. Line numbering adds, after the end of a line, a
+comment character, a blank, the file name, a colon and blank, and the
+line number of the source input file. This may help tracing a compiler
+message back to the original source file if CoCo is deleting inactive
+lines from the file seen by the compiler, or when macro expansion
+(see Section \@ref(macros)
+or [ASSERT directives](#dir-assert)
+lengthen lines too much, causing extra lines in the
+output, or when copy directives write text blocks or include files add
+source lines, or when lines are diverted to different output files
+via [OUTPUT directives](#dir-output) in source files.
+
+## About Multi-File versus Single-File Invocation
+
+The value of CoCo variables change whenever a new value is
+assigned. CoCo constants, of course, do not change value during
+execution. When several input files are processed in sequence to make
+a single output file, the values of CoCo variables seen for each
+subsequent source file depend upon values that might be changed by
+previous input files. This allows, for example, the programmer to
+count the number of times a text block is copied throughout the entire
+preprocessing run. However, it also means that not all source input
+files are preprocessed in identical environments. Thus, the programmer
+must choose whether a given quantity should be represented by a CoCo
+variable or a CoCo constant, and whether a single input file or a
+multiple input file run is appropriate for a given purpose.
+
+CoCo assumes a single invocation is for source files of either free
+form source or fixed form source, but that source form is never
+mixed. Since there is a single output file, it is difficult to mix the
+two. Automatic conversion utilities exist and some Fortran IDEs
+support reformatting but CoCo does not. Without due care, mixing free
+form source and fixed form source in a single CoCo execution may not
+work as intended. In any case, free form source is preferred for many
+reasons, so conversion of fixed form source files to free form source
+files is a good idea. CoCo only supports fixed form source to permit
+preprocessing of legacy codes.
+
+As discussed above, CoCo may be used to make a single output source
+file from one or several input source files. The advantage of one
+input source file making one output source file is that one has a
+clear set of CoCo symbols in use. One may use several runs to
+preprocess several input source files, so a different set file can be
+used for each input file allowing customization. The disadvantage is
+that to conveniently have the same set of CoCo symbols used to
+preprocess several input source files, one must prepare a set file
+and/or an include file to contain the CoCo symbol declarations, and
+use the same set file for each. This might be done by using the
+default set file name for all input files. Alternatively, one may use
+a freeze file to capture symbol declarations and values and read that
+file as an include file. See the [FREEZE](#dir-freeze)
+directive for more. The
+advantage of making one output file from several input files is that
+one set of CoCo symbols may be used to control the preprocessing of
+all input files, and the compiler may be able to do a better job of
+optimization if it can see more of the program at one time. The
+disadvantage is that one may have a symbol present when CoCo processes
+a subsequent input file which is unneeded and possibly confusing or
+having a value giving unexpected effects. Of course, an include file
+may be used to reset a set of integer or logical variables to a
+desired initial value for each source input file.
